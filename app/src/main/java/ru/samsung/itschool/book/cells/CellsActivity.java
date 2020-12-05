@@ -2,78 +2,81 @@ package ru.samsung.itschool.book.cells;
 
 import android.app.Activity;
 import android.content.Context;
+import android.graphics.Color;
 import android.os.Bundle;
 
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
-import android.view.View.OnLongClickListener;
 import android.widget.Button;
 import android.widget.GridLayout;
+import java.util.Random;
 
-
-import task.Stub;
-import task.Task;
-
-public class CellsActivity extends Activity implements OnClickListener,
-        OnLongClickListener {
-
-    private int WIDTH = 10;
-    private int HEIGHT = 10;
-
-    private Button[][] cells;
-
+public class CellsActivity extends Activity implements OnClickListener{
+    public static final Random random = new Random();
+    private final int WIDTH = 10;
+    private final int HEIGHT = 10;
+    Map playerMap;
+    Map botMap;
+    Button[][] playerCells;
+    Button[][] botCells;
+//    private boolean isGameOver;
+    private boolean isPlayerMove;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.cells);
         makeCells();
-
         generate();
 
     }
 
     void generate() {
-
-        //Эту строку нужно удалить
-        Task.showMessage(this, "Добавьте код в функцию активности generate() для генерации клеточного поля");
-
-
-        for (int i = 0; i < HEIGHT; i++)
-            for (int j = 0; j < WIDTH; j++) {
-                //ADD YOUR CODE HERE
-                //....
-
-            }
-    }
-
-    @Override
-    public boolean onLongClick(View v) {
-        //Эту строку нужно удалить
-        Stub.show(this, "Добавьте код в функцию активности onLongClick() - реакцию на долгое нажатие на клетку");
-        return false;
+//        isGameOver = false;
+        isPlayerMove = true;
     }
 
     @Override
     public void onClick(View v) {
-        //Эту строку нужно удалить
-        Stub.show(this, "Добавьте код в функцию активности onClick() - реакцию на нажатие на клетку");
-
         Button tappedCell = (Button) v;
-
-        //Получаем координтаты нажатой клетки
-        int tappedX = getX(tappedCell);
-        int tappedY = getY(tappedCell);
-        //ADD YOUR CODE HERE
-        //....
-
+        int x = getX(tappedCell);
+        int y = getY(tappedCell);
+        if (isPlayerMove){
+            int status = botMap.getCell(x,y).getStatus();
+            if(status == 0){
+                botCells[y][x].setBackgroundColor(Color.BLUE);
+                botMap.getCell(x,y).setStatus(1);
+                isPlayerMove = false;
+                enemyTurn();
+                return;
+            }
+            if(status == 2){
+                botCells[y][x].setBackgroundColor(Color.RED);
+                botMap.getCell(x,y).setStatus(3);
+            }
+        }
     }
 
-	/*
-     * NOT FOR THE BEGINNERS
-	 * ==================================================
-	 */
-
+    private void enemyTurn() {
+        int x = random.nextInt(WIDTH);
+        int y = random.nextInt(HEIGHT);
+        if(playerMap.getCell(x, y).getStatus() == 0 || playerMap.getCell(x, y).getStatus() == 2) {
+            //status = 0 - empty cell; 1 - attacked empty cell; 2 - ship; 3 - attacked ship
+            int status = playerMap.getCell(x,y).getStatus();
+            if(status == 0) {
+                playerCells[y][x].setBackgroundColor(Color.BLUE);
+                isPlayerMove = true;
+                playerMap.getCell(x,y).setStatus(1);
+                return;
+            }
+            else {
+                playerMap.getCell(x,y).setStatus(3);
+                playerCells[y][x].setBackgroundColor(Color.RED);
+            }
+            playerMap.getCell(x, y).hit();
+        }
+        else enemyTurn();
+    }
     int getX(View v) {
         return Integer.parseInt(((String) v.getTag()).split(",")[1]);
     }
@@ -83,19 +86,33 @@ public class CellsActivity extends Activity implements OnClickListener,
     }
 
     void makeCells() {
-        cells = new Button[HEIGHT][WIDTH];
-        GridLayout cellsLayout = (GridLayout) findViewById(R.id.CellsLayout);
+        playerMap = new Map(HEIGHT,WIDTH, true);
+        playerCells = new Button[playerMap.getSizeY()][playerMap.getSizeX()];
+        GridLayout cellsLayout = findViewById(R.id.PlayerMap);
         cellsLayout.removeAllViews();
         cellsLayout.setColumnCount(WIDTH);
         for (int i = 0; i < HEIGHT; i++)
             for (int j = 0; j < WIDTH; j++) {
                 LayoutInflater inflater = (LayoutInflater) getApplicationContext()
                         .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-                cells[i][j] = (Button) inflater.inflate(R.layout.cell, cellsLayout, false);
-                cells[i][j].setOnClickListener(this);
-                cells[i][j].setOnLongClickListener(this);
-                cells[i][j].setTag(i + "," + j);
-                cellsLayout.addView(cells[i][j]);
+                playerCells[i][j] = (Button) inflater.inflate(R.layout.cell, cellsLayout, false);
+                playerCells[i][j].setOnClickListener(this);
+                playerCells[i][j].setTag(i + "," + j);
+                cellsLayout.addView(playerCells[i][j]);
+            }
+        botMap = new Map(HEIGHT,WIDTH, false);
+        botCells = new Button[HEIGHT][WIDTH];
+        cellsLayout = findViewById(R.id.BotMap);
+        cellsLayout.removeAllViews();
+        cellsLayout.setColumnCount(WIDTH);
+        for (int i = 0; i < HEIGHT; i++)
+            for (int j = 0; j < WIDTH; j++) {
+                LayoutInflater inflater = (LayoutInflater) getApplicationContext()
+                        .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+                botCells[i][j] = (Button) inflater.inflate(R.layout.cell, cellsLayout, false);
+                botCells[i][j].setOnClickListener(this);
+                botCells[i][j].setTag(i + "," + j);
+                cellsLayout.addView(botCells[i][j]);
             }
     }
 
