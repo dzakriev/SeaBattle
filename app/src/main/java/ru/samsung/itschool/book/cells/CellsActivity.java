@@ -96,7 +96,6 @@ public class CellsActivity extends Activity implements OnClickListener{
                 LayoutInflater inflater = (LayoutInflater) getApplicationContext()
                         .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
                 playerCells[i][j] = (Button) inflater.inflate(R.layout.cell, cellsLayout, false);
-                playerCells[i][j].setOnClickListener(this);
                 playerCells[i][j].setTag(i + "," + j);
                 cellsLayout.addView(playerCells[i][j]);
             }
